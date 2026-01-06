@@ -1,21 +1,18 @@
 import { prisma } from "../../config/prisma.js";
 
 export async function getTotalClicks(shortUrlId) {
-  return await prisma.clickEvent.count({
-    where: { shortUrlId },
-  });
+    return await prisma.$queryRaw`
+      SELECT SUM("totalClicks")::int
+      FROM "UrlDailyStats"
+      WHERE "shortUrlId" = ${shortUrlId};
+  `;
 }
 
 export async function getClicksByDay(shortUrlId) {
-  return await prisma.$queryRaw`
-    SELECT
-      DATE("clickedAt") AS date,
-      COUNT(*)::int AS count
-    FROM "ClickEvent"
-    WHERE "shortUrlId" = ${shortUrlId}
-    GROUP BY DATE("clickedAt")
-    ORDER BY date ASC;
-  `;
+  return await prisma.urlDailyStats.findMany({
+    where: { shortUrlId },
+    orderBy: { date: "asc" },
+  })
 }
 
 export async function getClicksByCountry(shortUrlId) {

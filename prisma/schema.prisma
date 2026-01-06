@@ -35,7 +35,19 @@ model ClickEvent {
   userAgent  String?
   country    String?
   deviceType String?
-  
+
   @@index([shortUrlId, clickedAt])
   @@index([clickedAt])
+}
+
+
+model UrlDailyStats {
+  shortUrlId   String
+  date         DateTime
+  totalClicks  Int
+  mobileClicks Int
+  desktopClicks Int
+
+  @@id([shortUrlId, date])
+  @@index([date])
 }

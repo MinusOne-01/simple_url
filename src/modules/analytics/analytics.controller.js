@@ -11,8 +11,6 @@ export async function summarize(req, res){
     return res.json({
          totalClicks: await getTotalClicks(shortCode),
          clicksByDay: await getClicksByDay(shortCode),
-         byCountry: await getClicksByCountry(shortCode),
-         byDevice: await getClicksByDevice(shortCode),
     });
 
 
