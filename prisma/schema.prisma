@@ -35,7 +35,7 @@ model ClickEvent {
   userAgent  String?
   country    String?
   deviceType String?
-
+  
   @@index([shortUrlId, clickedAt])
   @@index([clickedAt])
 }
