@@ -27,6 +27,10 @@ export async function redirect(req, res) {
     shortUrlId: url.id,
     req,
   });
+
+  if (!url.isActive) {
+    return res.status(404).json({ error: "Url expired!" });
+  }
   
   return res.redirect(302, url.originalUrl);
 }

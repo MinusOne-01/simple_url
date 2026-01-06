@@ -1,4 +1,5 @@
 import { prisma } from "../../config/prisma.js";
+import { redis } from "../../config/redis.js"
 import { generateShortCode } from "../../utils/shortCode.js";
 
 function normalizeUrl(url) {
@@ -7,6 +8,8 @@ function normalizeUrl(url) {
   }
   return url;
 }
+
+const CACHE_PREFIX = "short:";
 
 export async function createShortUrl(url, ttlDays) {
 
@@ -33,6 +36,18 @@ export async function createShortUrl(url, ttlDays) {
 
 
 export async function getActiveShortUrl(shortCode) {
+
+  const cacheKey = `${CACHE_PREFIX}${shortCode}`;
+
+   // 1. Try cache
+  const cached = await redis.get(cacheKey);
+  if (cached) {
+    console.log("cache hit!");
+    return JSON.parse(cached);
+  }
+
+
+  // 2. Fallback to DB
   const record = await prisma.shortUrl.findFirst({
     where: {
       shortCode,
@@ -43,6 +58,23 @@ export async function getActiveShortUrl(shortCode) {
       ],
     },
   });
+
+  if (!record) return null;
+
+
+  // 3. Compute TTL
+  let ttlSeconds = 3600; // default 1 hour
+
+  if (record.expiresAt) {
+    ttlSeconds = Math.max(
+      Math.floor((record.expiresAt.getTime() - Date.now()) / 1000),
+      1
+    );
+  }
+
+  // 4. Cache
+  await redis.setex(cacheKey, ttlSeconds, JSON.stringify(record));
+  console.log("db hit!");
 
   return record;
 }
